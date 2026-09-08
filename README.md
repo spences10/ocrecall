@@ -193,8 +193,11 @@ node src/index.ts --help
 `pnpm build` after changing SQL assets. The published package includes
 the schema and migration directory, CLI, and typed resumable API.
 
-The schema starts at `PRAGMA user_version = 1`. Future changes must
-use transactional migrations that retain archive history.
+The schema starts at `PRAGMA user_version = 1`. Opening a database
+automatically applies registered numbered migrations in order, with
+the complete upgrade rolled back on failure. See the
+[migration guide](src/migrations/README.md) for adding future changes
+while retaining archive history.
 
 The workspace retains pirecall's two-day minimum dependency release
 age. Consequently, `pnpx ocrecall` from this checkout can reject a
