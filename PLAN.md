@@ -1,7 +1,13 @@
 # ocrecall implementation plan
 
-Research date: 2026-09-08. Planning only; implementation has not
-started.
+Research date: 2026-09-08. Initial implementation completed on the
+same date; this document retains the research and design rationale.
+
+The implementation uses completed items for conversation search, keeps
+wrapper invocations separate from completed operations, and reads
+optional state metadata with schema checks. Resume support remains
+explicitly unverified. See README.md for the implemented contract and
+limitations.
 
 ## Recommendation
 
@@ -188,9 +194,9 @@ file checkpoints from logical content identity. Order recall by source
 sequence, not timestamps alone: multiple events can share a timestamp.
 
 Do not copy Pi's cost_total=0 default: the observed Codex usage
-records do not contain monetary cost. Version 1 reports token usage
-and cost as unavailable. Any later pricing estimate must be separately
-labelled and versioned.
+records do not contain monetary cost. Version 1 reports recorded token
+usage and monetary cost as unavailable. Any later pricing estimate
+must be separately labelled and versioned.
 
 ### Sync behavior and improvements over the baseline
 
