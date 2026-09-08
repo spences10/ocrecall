@@ -146,8 +146,7 @@ node src/index.ts --help
 the schema and migration directory, CLI, and typed resumable API.
 
 The schema starts at `PRAGMA user_version = 1`. Future changes must
-use transactional migrations that retain archive history. See
-[PLAN.md](PLAN.md) for architecture and research notes.
+use transactional migrations that retain archive history.
 
 The workspace retains pirecall's two-day minimum dependency release
 age. Consequently, `pnpx ocrecall` from this checkout can reject a
