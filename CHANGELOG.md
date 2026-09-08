@@ -1,5 +1,12 @@
 # ocrecall
 
+## 0.0.5
+
+### Patch Changes
+
+- 473671e: Add transactional schema migrations with rollback
+  protection and a guide for future upgrades.
+
 ## 0.0.4
 
 ### Patch Changes
