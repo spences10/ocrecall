@@ -108,12 +108,12 @@ Codex source files. `--dry-run` previews the eligible output count.
 ## Resumable session API
 
 ```ts
-import { list_resumable_sessions } from "ocrecall/resumable";
+import { list_resumable_sessions } from 'ocrecall/resumable';
 
 const result = await list_resumable_sessions({
-	scope: "project",
+	scope: 'project',
 	cwd: process.cwd(),
-	query: "migration",
+	query: 'migration',
 	limit: 50,
 });
 ```

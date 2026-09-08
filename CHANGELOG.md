@@ -1,5 +1,13 @@
 # ocrecall
 
+## 0.0.3
+
+### Patch Changes
+
+- 802796f: Skip empty and whitespace-only entries before limiting
+  recall context, so surrounding slots contain readable messages or
+  reasoning.
+
 ## 0.0.2
 
 ### Patch Changes
