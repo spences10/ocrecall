@@ -1,5 +1,12 @@
 # ocrecall
 
+## 0.0.6
+
+### Patch Changes
+
+- a865bcd: Update dependencies and simplify the README with badges and
+  a linked reference.
+
 ## 0.0.5
 
 ### Patch Changes

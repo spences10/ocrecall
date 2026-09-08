@@ -1,6 +1,6 @@
 {
 	"name": "ocrecall",
-	"version": "0.0.5",
+	"version": "0.0.6",
 	"description": "Sync OpenAI Codex sessions to SQLite and recall context from past sessions",
 	"keywords": [
 		"analytics",
