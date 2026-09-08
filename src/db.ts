@@ -139,6 +139,7 @@ export class Database {
 					this.all(
 						`SELECT m.id,m.type,m.content_text,m.timestamp,m.source_order FROM messages m
 			 WHERE session_id=? AND source_order ${before ? '<' : '>'} ?
+			 AND length(trim(COALESCE(m.content_text,''), char(9,10,11,12,13,32))) > 0
 			 AND NOT EXISTS(SELECT 1 FROM turns t WHERE t.session_id=m.session_id AND t.id=m.turn_id AND t.rolled_back=1)
 			 ORDER BY source_order ${before ? 'DESC' : 'ASC'} LIMIT ?`,
 						match.session_id,
