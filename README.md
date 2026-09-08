@@ -27,7 +27,7 @@ ocrecall sync                         # Incremental import
 ocrecall stats --json                 # Counts and recorded token usage
 ocrecall sessions --limit 20          # Recent sessions
 ocrecall sessions --state archived    # Archived sessions
-ocrecall search "migration" --json    # Full-text phrase search
+ocrecall search "migration" --json    # Full-text search
 ocrecall recall "migration" -c 2      # Bounded surrounding context, JSON
 ocrecall tools                       # Completed operations
 ocrecall tools --kind invocation     # Model tool calls, counted separately
@@ -39,8 +39,50 @@ ocrecall resumable --scope project --cwd "$PWD" --json
 
 All commands accept `--json`, `--db <path>` (`-d`), and
 `--codex-home <path>`. `recall` and `resumable` always return JSON.
-`search`, `recall`, and `sessions` accept `--project <path>` (`-p`).
+`search`, `recall`, `sessions`, and `tools` accept `--project <path>`
+(`-p`), matching a path or partial project name (case-insensitive).
+Resumable project scope continues to use an exact resolved `--cwd`.
 Run a command with `--help` for its options.
+
+Search supports pirecall's FTS expressions: `AND`, `OR`, `NOT`, quoted
+phrases, and `prefix*`. Multiple unquoted words require all terms; for
+an exact phrase, pass the quotes through to FTS:
+
+```bash
+ocrecall search '"database migration"'
+ocrecall search 'migration OR rollback' --project ocrecall
+ocrecall search 'migrat*' --session 01a080 --after 2026-09-01 --sort time
+ocrecall search migration --context 2 --rebuild --json
+ocrecall tools --project ocrecall --top 10
+ocrecall query 'SELECT * FROM sessions' --format csv --limit 10
+ocrecall query 'SELECT * FROM messages LIMIT 5' --wide
+ocrecall schema messages --json
+```
+
+Search `--session` matches an ID prefix. `--after` is inclusive and
+accepts an ISO date or timestamp; date-only values use UTC. `--sort`
+accepts `relevance`, `time` (newest first), or `time-asc`. `--context`
+adds readable surrounding items, skipping empty entries. `--rebuild`
+repairs the FTS index from archived messages without reimporting
+sources.
+
+Query supports `--format table|json|csv` (`-f`), `--limit` (`-l`), and
+`--wide` (`-w`). The limit caps returned rows even when SQL already
+has its own LIMIT. `--json` takes precedence over `--format`. CSV
+quotes commas, quotes, and line breaks; JSON/CSV values are never
+truncated.
+
+Tool statistics accept `--top` (`-t`) or `--limit` (`-l`), defaulting
+to 10. Percentages use all tools matching the project and kind, before
+the top-N limit. Sessions default to 10 results and include recorded
+token totals, duration, and ISO dates. Costs remain unavailable for
+Codex. `schema [table]` includes row counts, columns, indexes, and
+foreign keys.
+
+The command options now cover pirecall's search, query, tool, recall,
+session, and schema workflows. JSON retains Codex-specific fields and
+existing ocrecall fields; it is not a drop-in replacement for
+pirecall's SQLite schema or Pi resume integration.
 
 The Codex home defaults to `CODEX_HOME`, then `~/.codex`. The archive
 path defaults to `<Codex home>/ocrecall.db`. Sync reads both
@@ -103,7 +145,13 @@ archive to recover every edit.
 
 `compact` replaces old, large tool outputs in ocrecall's database with
 a marker. It preserves conversation messages, usage, call inputs, and
-Codex source files. `--dry-run` previews the eligible output count.
+Codex source files. `--dry-run` previews eligible output counts and
+original UTF-8 bytes, grouped by tool kind and name. Results include
+the cutoff date and before/after database-plus-WAL sizes. Actual
+compaction vacuums the archive and attempts to checkpoint the WAL;
+concurrent readers can delay physical space reclamation. These sizes
+describe files, not a promise that every removed output byte
+immediately returns to the filesystem.
 
 ## Resumable session API
 

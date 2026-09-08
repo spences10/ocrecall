@@ -1,5 +1,12 @@
 # ocrecall
 
+## 0.0.4
+
+### Patch Changes
+
+- Match pirecall command options with advanced search, query exports,
+  tool filtering, and richer reporting.
+
 ## 0.0.3
 
 ### Patch Changes
