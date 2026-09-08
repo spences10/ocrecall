@@ -1,19 +1,19 @@
 import {
-	mkdtempSync,
-	mkdirSync,
-	writeFileSync,
 	appendFileSync,
+	mkdirSync,
+	mkdtempSync,
+	readFileSync,
 	renameSync,
 	rmSync,
-	readFileSync,
+	writeFileSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, expect, test } from 'vitest';
 import { Database } from './db.ts';
-import { sync } from './sync.ts';
 import { entry, fixture, item } from './fixtures.ts';
 import { list_resumable_sessions } from './resumable.ts';
+import { sync } from './sync.ts';
 
 let home: string;
 let path: string;

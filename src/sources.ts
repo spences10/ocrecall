@@ -1,8 +1,7 @@
-import { open } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
+import { open, readdir } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { join, resolve } from 'node:path';
-import { createHash } from 'node:crypto';
-import { readdir } from 'node:fs/promises';
 import { read_lines } from './parser.ts';
 import { object, string } from './types.ts';
 
