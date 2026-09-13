@@ -1,5 +1,12 @@
 # ocrecall
 
+## 0.0.7
+
+### Patch Changes
+
+- 7290c1d: Exclude assistant progress updates by default; preserve
+  user messages, final answers, and explicit commentary searches.
+
 ## 0.0.6
 
 ### Patch Changes
