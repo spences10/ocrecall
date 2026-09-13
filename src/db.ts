@@ -13,12 +13,15 @@ function escape_fts5_query(term: string): string {
 	if (!/[./\-:()^+']/.test(base) && !base.includes('"')) return term;
 	return '"' + base.replaceAll('"', '""') + '"' + (prefix ? '*' : '');
 }
+export type SearchPhase = 'final_answer' | 'commentary' | 'all';
+
 export interface SearchOptions {
 	project?: string;
 	limit?: number;
 	session?: string;
 	after?: number;
 	sort?: 'relevance' | 'time' | 'time-asc';
+	phase?: SearchPhase;
 	include_rolled_back?: boolean;
 }
 
@@ -137,6 +140,13 @@ export class Database {
 			!Number.isFinite(options.after)
 		)
 			throw new Error('Invalid after date');
+		if (
+			options.phase !== undefined &&
+			!['final_answer', 'commentary', 'all'].includes(options.phase)
+		)
+			throw new Error(
+				'phase must be final_answer, commentary, or all',
+			);
 		const order =
 			sort === 'time'
 				? 'm.timestamp DESC, m.session_id, m.source_order DESC'
@@ -148,6 +158,7 @@ export class Database {
    snippet(messages_fts,0,'>>>','<<<','…',32) AS snippet
    FROM messages_fts JOIN messages m ON m.rowid=messages_fts.rowid JOIN sessions s ON s.id=m.session_id
    WHERE messages_fts MATCH ? AND (? IS NULL OR instr(lower(COALESCE(s.project_path,'')),lower(?))>0)
+   AND (?='all' OR (? IS NULL AND (m.type<>'assistant' OR COALESCE(m.phase,'')<>'commentary')) OR m.phase=?)
    AND (? IS NULL OR substr(m.session_id,1,length(?))=?)
    AND (? IS NULL OR m.timestamp>=?)
    AND (?=1 OR NOT EXISTS(SELECT 1 FROM turns t WHERE t.session_id=m.session_id AND t.id=m.turn_id AND t.rolled_back=1))
@@ -155,6 +166,9 @@ export class Database {
 			escape_fts5_query(term),
 			options.project ?? null,
 			options.project ?? null,
+			options.phase ?? null,
+			options.phase ?? null,
+			options.phase ?? null,
 			options.session ?? null,
 			options.session ?? null,
 			options.session ?? null,
@@ -172,7 +186,7 @@ export class Database {
 	) {
 		const fetch = (before: boolean) =>
 			this.all(
-				`SELECT m.id,m.type,m.content_text,m.timestamp,m.source_order FROM messages m
+				`SELECT m.id,m.type,m.phase,m.content_text,m.timestamp,m.source_order FROM messages m
    WHERE session_id=? AND source_order ${before ? '<' : '>'} ?
    AND length(trim(COALESCE(m.content_text,''), char(9,10,11,12,13,32))) > 0
    AND (?=1 OR NOT EXISTS(SELECT 1 FROM turns t WHERE t.session_id=m.session_id AND t.id=m.turn_id AND t.rolled_back=1))
@@ -195,6 +209,7 @@ export class Database {
 			project?: string;
 			limit?: number;
 			context?: number;
+			phase?: SearchPhase;
 		} = {},
 	) {
 		const matches = this.search(term, {
@@ -206,6 +221,8 @@ export class Database {
 			date: new Date(Number(match.timestamp)).toISOString(),
 			match: {
 				id: match.id,
+				type: match.type,
+				phase: match.phase,
 				content_text: String(match.content_text ?? '').slice(0, 4000),
 				timestamp: match.timestamp,
 			},

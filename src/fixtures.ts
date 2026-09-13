@@ -80,7 +80,7 @@ export function fixture(
 				],
 			}),
 			item('assistant-1', 'AgentMessage', {
-				phase: 'final',
+				phase: 'final_answer',
 				content: [{ type: 'text', text: 'Found the migrations.' }],
 			}),
 			entry('event_msg', {

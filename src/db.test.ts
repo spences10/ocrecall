@@ -137,6 +137,99 @@ test('search supports FTS syntax, project fragments, session prefixes, dates and
 	}
 });
 
+test('search prefers completed answers while preserving explicit phase access', () => {
+	const db = new Database(':memory:');
+	try {
+		db.run(
+			"INSERT INTO sessions(id,history_mode,first_timestamp,last_timestamp) VALUES('session','paginated',0,0)",
+		);
+		for (const [id, turn, type, phase, text, order] of [
+			['user', 'turn-1', 'user', null, 'phase needle request', 1],
+			[
+				'progress',
+				'turn-1',
+				'assistant',
+				'commentary',
+				'phase needle investigating',
+				2,
+			],
+			[
+				'answer',
+				'turn-1',
+				'assistant',
+				'final_answer',
+				'phase needle completed',
+				3,
+			],
+			[
+				'reasoning',
+				'turn-1',
+				'reasoning',
+				null,
+				'phase needle rationale',
+				4,
+			],
+			[
+				'progress-2',
+				'turn-2',
+				'assistant',
+				'commentary',
+				'phase needle checking',
+				5,
+			],
+		] as const)
+			db.run(
+				'INSERT INTO messages(session_id,id,turn_id,type,phase,content_text,timestamp,source_order) VALUES(?,?,?,?,?,?,?,?)',
+				'session',
+				id,
+				turn,
+				type,
+				phase,
+				text,
+				order,
+				order,
+			);
+
+		expect(
+			db
+				.search('phase needle')
+				.map((row) => String(row.id))
+				.sort((a, b) => a.localeCompare(b)),
+		).toEqual(['answer', 'reasoning', 'user']);
+		expect(
+			db
+				.search('phase needle', { phase: 'commentary' })
+				.map((row) => String(row.id))
+				.sort((a, b) => a.localeCompare(b)),
+		).toEqual(['progress', 'progress-2']);
+		expect(
+			db
+				.search('phase needle', { phase: 'final_answer' })
+				.map((row) => String(row.id)),
+		).toEqual(['answer']);
+		expect(db.search('phase needle', { phase: 'all' })).toHaveLength(
+			5,
+		);
+
+		const recalled = db.recall('completed', { context: 1 })
+			.matches[0];
+		expect(recalled.match).toMatchObject({
+			id: 'answer',
+			type: 'assistant',
+			phase: 'final_answer',
+		});
+		expect(recalled.before[0]).toMatchObject({
+			id: 'progress',
+			phase: 'commentary',
+		});
+		expect(() =>
+			db.search('needle', { phase: 'invalid' as 'all' }),
+		).toThrow(/phase/);
+	} finally {
+		db.close();
+	}
+});
+
 test('tool percentages include all filtered tools before applying the top limit', () => {
 	const db = new Database(':memory:');
 	try {

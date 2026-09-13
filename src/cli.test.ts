@@ -1,5 +1,6 @@
 import { execFileSync, spawnSync } from 'node:child_process';
 import {
+	appendFileSync,
 	mkdirSync,
 	mkdtempSync,
 	rmSync,
@@ -9,7 +10,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterEach, beforeEach, expect, test } from 'vitest';
-import { fixture } from './fixtures.ts';
+import { fixture, item } from './fixtures.ts';
 
 let home: string;
 const cli = fileURLToPath(new URL('./index.ts', import.meta.url));
@@ -110,6 +111,49 @@ test('search options support expressions, filters, context, rebuild and unquoted
 	expect(table.foreign_keys).toHaveLength(1);
 });
 
+test('search and recall expose completed-answer defaults and phase filters', () => {
+	appendFileSync(
+		join(home, 'sessions', 'test.jsonl'),
+		item('progress', 'AgentMessage', {
+			phase: 'commentary',
+			content: [{ type: 'text', text: 'phasemarker investigation' }],
+		}) +
+			'\n' +
+			item('answer', 'AgentMessage', {
+				phase: 'final_answer',
+				content: [{ type: 'text', text: 'phasemarker result' }],
+			}) +
+			'\n',
+	);
+	run('sync');
+
+	const defaults = JSON.parse(run('search', 'phasemarker'));
+	expect(defaults).toHaveLength(1);
+	expect(defaults[0]).toMatchObject({
+		id: 'answer',
+		type: 'assistant',
+		phase: 'final_answer',
+	});
+	expect(
+		JSON.parse(run('search', 'phasemarker', '--phase', 'commentary')),
+	).toMatchObject([{ id: 'progress', phase: 'commentary' }]);
+	expect(
+		JSON.parse(run('search', 'phasemarker', '--phase', 'all')),
+	).toHaveLength(2);
+
+	const recalled = JSON.parse(run('recall', 'phasemarker'));
+	expect(recalled.matches).toHaveLength(1);
+	expect(recalled.matches[0].match).toMatchObject({
+		id: 'answer',
+		type: 'assistant',
+		phase: 'final_answer',
+	});
+	expect(recalled.matches[0].before.at(-1)).toMatchObject({
+		id: 'progress',
+		phase: 'commentary',
+	});
+});
+
 test('query supports CSV, JSON format, safe row caps and wide output', () => {
 	run('sync');
 	const raw = (...args: string[]) =>
@@ -164,6 +208,7 @@ test('rejects invalid search filters and query formats', () => {
 		['search', 'migration', '--after', '2026-02-31'],
 		['search', 'migration', '--after', 'yesterday'],
 		['search', 'migration', '--context', '-1'],
+		['search', 'migration', '--phase', 'invalid'],
 		['query', 'SELECT 1', '--format', 'yaml'],
 		['query', 'SELECT 1', '--limit', '2oops'],
 	]) {

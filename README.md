@@ -42,10 +42,15 @@ pnpx ocrecall resumable --json      # Live sessions for resume integrations
 All commands accept `--json`, `--db <path>` (`-d`), and
 `--codex-home <path>`. Recall and resumable output is always JSON.
 Search, recall, sessions, and tools support `--project <name>` (`-p`).
+Search and recall exclude assistant progress commentary by default so
+completed answers rank first. Use `--phase commentary` to search
+progress updates or `--phase all` for the previous unfiltered
+behaviour.
 
 ```bash
 pnpx ocrecall search 'migration OR rollback' --project my-app
 pnpx ocrecall search 'migrat*' --after 2026-09-01 --context 2
+pnpx ocrecall search 'source path' --phase commentary
 pnpx ocrecall query 'SELECT * FROM sessions' --format csv --limit 10
 ```
 

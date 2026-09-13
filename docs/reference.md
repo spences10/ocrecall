@@ -41,10 +41,19 @@ ocrecall schema messages --json
 
 Search `--session` matches an ID prefix. `--after` is inclusive and
 accepts an ISO date or timestamp; date-only values use UTC. `--sort`
-accepts `relevance`, `time` (newest first), or `time-asc`. `--context`
-adds readable surrounding items, skipping empty entries. `--rebuild`
-repairs the FTS index from archived messages without reimporting
-sources.
+accepts `relevance`, `time` (newest first), or `time-asc`.
+
+Search and recall exclude assistant `commentary` matches by default
+while retaining user messages, reasoning, transcripts, and assistant
+`final_answer` messages. Both commands accept `--phase final_answer`,
+`--phase commentary`, or `--phase all`; `all` restores the previous
+unfiltered behaviour. The phase filter applies before ranking and
+limiting. Surrounding context remains unfiltered and includes each
+item's phase.
+
+`--context` adds readable surrounding items, skipping empty entries.
+`--rebuild` repairs the FTS index from archived messages without
+reimporting sources.
 
 Query supports `--format table|json|csv` (`-f`), `--limit` (`-l`), and
 `--wide` (`-w`). The limit caps returned rows even when SQL already

@@ -33,6 +33,16 @@ const list_args = {
 		description: 'Filter by project path or partial name',
 	},
 } as const;
+const phase_arg = {
+	type: 'enum' as const,
+	options: [
+		'final_answer' as const,
+		'commentary' as const,
+		'all' as const,
+	],
+	description:
+		'Match phase: final_answer, commentary, or all (default: completed answers)',
+};
 function integer(
 	value: string | undefined,
 	fallback: number,
@@ -397,6 +407,7 @@ export const search = defineCommand({
 			alias: 's',
 			description: 'relevance (default), time, or time-asc',
 		},
+		phase: phase_arg,
 		'include-rolled-back': {
 			type: 'boolean',
 			description: 'Include abandoned turns',
@@ -423,6 +434,7 @@ export const search = defineCommand({
 					session: args.session,
 					after,
 					sort,
+					phase: args.phase,
 					include_rolled_back: args['include-rolled-back'],
 				})
 				.map((row) => ({
@@ -463,6 +475,7 @@ export const recall = defineCommand({
 			alias: 'c',
 			description: 'Items before/after each match (default: 2)',
 		},
+		phase: phase_arg,
 	},
 	run({ args }) {
 		const db = open_database(args);
@@ -472,6 +485,7 @@ export const recall = defineCommand({
 					project: args.project,
 					limit: integer(args.limit, 5, 'limit', 1, 50),
 					context: integer(args.context, 2, 'context', 0, 20),
+					phase: args.phase,
 				}),
 				true,
 			);
